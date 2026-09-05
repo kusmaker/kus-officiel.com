@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KUS | Site Officiel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --gold:    #d4a832;
+  --gold2:   #b8860b;
+  --dark:    #08080d;
+  --dark2:   #0f0f18;
+  --dark3:   #161624;
+  --border:  rgba(212,168,50,.12);
+  --border2: rgba(212,168,50,.25);
+  --text:    #e8e8e8;
+  --muted:   rgba(232,232,232,.45);
+  --grad:    linear-gradient(135deg, #d4a832, #b8860b);
+  --danger:  #e05050;
+  --success: #3dba72;
+  --admin-bg:#0b0b14;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  font-family:'Inter',sans-serif;
+  background:var(--dark);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.6;
+}
+
+/* ============================================================
+   ADMIN BAR (top stripe — always visible when admin mode on)
+   ============================================================ */
+#admin-bar {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0;
+  height:42px;
+  background:#1a1a2e;
+  border-bottom:2px solid var(--gold);
+  z-index:9999;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 1.5rem;
+  gap:1rem;
+}
+body.admin-mode #admin-bar { display:flex; }
+body.admin-mode nav { top:42px; }
+body.admin-mode .hero { padding-top:42px; }
+
+.admin-bar-left { display:flex; align-items:center; gap:1rem; }
+.admin-bar-label {
+  font-size:.7rem; letter-spacing:3px; text-transform:uppercase;
+  color:var(--gold); font-weight:600;
+}
+.admin-bar-hint { font-size:.72rem; color:var(--muted); }
+
+.admin-bar-right { display:flex; align-items:center; gap:.6rem; }
+
+.ab-btn {
+  padding:.35rem .9rem;
+  border-radius:3px;
+  border:none;
+  cursor:pointer;
+  font-size:.72rem;
+  font-weight:600;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  transition:all .2s;
+}
+.ab-btn.primary { background:var(--grad); color:#000; }
+.ab-btn.primary:hover { filter:brightness(1.1); }
+.ab-btn.ghost { background:rgba(255,255,255,.07); color:var(--text); border:1px solid rgba(255,255,255,.12); }
+.ab-btn.ghost:hover { background:rgba(255,255,255,.13); }
+.ab-btn.danger { background:var(--danger); color:#fff; }
+.ab-btn.danger:hover { filter:brightness(1.1); }
+
+/* ============================================================
+   ADMIN PANEL (slide-in drawer)
+   ============================================================ */
+#admin-panel {
+  display:none;
+  position:fixed;
+  top:0; right:0;
+  width:480px; max-width:95vw;
+  height:100vh;
+  background:var(--admin-bg);
+  border-left:1px solid var(--border2);
+  z-index:9998;
+  overflow-y:auto;
+  transform:translateX(100%);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  flex-direction:column;
+}
+body.admin-mode #admin-panel { display:flex; }
+#admin-panel.open { transform:translateX(0); }
+
+.ap-header {
+  padding:1.2rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; background:var(--admin-bg); z-index:10;
+}
+.ap-header h2 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem; letter-spacing:3px; color:var(--gold);
+}
+.ap-close {
+  background:none; border:none; color:var(--muted);
+  font-size:1.2rem; cursor:pointer; transition:color .2s;
+}
+.ap-close:hover { color:var(--text); }
+
+/* Tabs */
+.ap-tabs {
+  display:flex;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  flex-shrink:0;
+}
+.ap-tab {
+  padding:.8rem 1.1rem;
+  background:none; border:none;
+  color:var(--muted);
+  font-size:.72rem; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; font-weight:600;
+  border-bottom:2px solid transparent;
+  transition:all .2s;
+  white-space:nowrap;
+}
+.ap-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.ap-tab:hover:not(.active) { color:var(--text); }
+
+.ap-body { flex:1; padding:1.5rem; overflow-y:auto; }
+
+.ap-section { display:none; }
+.ap-section.active { display:block; }
+
+/* Form elements */
+.field { margin-bottom:1.2rem; }
+.field label {
+  display:block;
+  font-size:.68rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); margin-bottom:.45rem;
+}
+.field input, .field textarea, .field select {
+  width:100%;
+  padding:.65rem .9rem;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  border-radius:3px;
+  color:var(--text);
+  font-size:.88rem;
+  font-family:'Inter',sans-serif;
+  outline:none;
+  transition:border-color .2s;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color:var(--gold);
+}
+.field textarea { resize:vertical; min-height:80px; }
+.field select option { background:#1a1a2e; }
+
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+
+.ap-card {
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1rem;
+  margin-bottom:.8rem;
+}
+.ap-card-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:.8rem;
+}
+.ap-card-title {
+  font-size:.8rem; font-weight:600; letter-spacing:1px;
+}
+.ap-card-actions { display:flex; gap:.4rem; }
+
+.icon-btn {
+  width:28px; height:28px;
+  background:none; border:1px solid var(--border);
+  border-radius:3px; cursor:pointer; color:var(--muted);
+  font-size:.75rem; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.icon-btn:hover { border-color:var(--gold); color:var(--gold); }
+.icon-btn.del:hover { border-color:var(--danger); color:var(--danger); }
+
+.ap-btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.6rem 1.2rem;
+  background:rgba(212,168,50,.1);
+  border:1px solid var(--border2);
+  border-radius:3px;
+  color:var(--gold);
+  font-size:.75rem; font-weight:600;
+  letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; transition:all .2s;
+}
+.ap-btn:hover { background:rgba(212,168,50,.18); }
+.ap-btn.full { width:100%; justify-content:center; }
+
+/* Photo upload widgets */
+.ap-photo { display:flex; align-items:center; gap:.9rem; margin-bottom:1rem; }
+.ap-photo-preview {
+  width:64px; height:64px; flex-shrink:0;
+  border-radius:4px; overflow:hidden;
+  background:rgba(255,255,255,.04) center/cover no-repeat;
+  border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(212,168,50,.3); font-size:1.1rem;
+}
+.ap-photo-preview-lg { width:96px; height:96px; font-size:1.6rem; }
+.ap-photo-actions { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.ap-upload-btn { cursor:pointer; }
+
+.ap-divider {
+  border:none; border-top:1px solid var(--border);
+  margin:1.2rem 0;
+}
+
+.ap-hint {
+  font-size:.75rem; color:var(--muted);
+  padding:.5rem .7rem;
+  background:rgba(212,168,50,.05);
+  border-left:2px solid var(--gold);
+  border-radius:2px;
+  margin-bottom:1rem;
+}
+
+.ap-success {
+  font-size:.8rem; color:var(--success);
+  padding:.5rem .8rem;
+  background:rgba(61,186,114,.08);
+  border:1px solid rgba(61,186,114,.2);
+  border-radius:3px;
+  display:none; margin-top:.8rem;
+}
+
+/* Toggle */
+.toggle-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.6rem 0;
+}
+.toggle-label { font-size:.82rem; }
+.toggle {
+  position:relative; width:40px; height:22px;
+  cursor:pointer;
+}
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; inset:0;
+  background:rgba(255,255,255,.1);
+  border-radius:22px; transition:.3s;
+}
+.toggle-slider::before {
+  content:''; position:absolute;
+  width:16px; height:16px; border-radius:50%;
+  left:3px; top:3px;
+  background:#666; transition:.3s;
+}
+.toggle input:checked + .toggle-slider { background:var(--gold); }
+.toggle input:checked + .toggle-slider::before {
+  background:#000; transform:translateX(18px);
+}
+
+/* Color swatch row */
+.color-row { display:flex; gap:.6rem; flex-wrap:wrap; }
+.color-swatch {
+  width:32px; height:32px; border-radius:4px;
+  cursor:pointer; border:2px solid transparent;
+  transition:all .2s;
+}
+.color-swatch.selected { border-color:#fff; transform:scale(1.15); }
+
+/* ============================================================
+   LOGIN OVERLAY
+   ============================================================ */
+#login-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.92);
+  z-index:10000;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(6px);
+}
+#login-overlay.show { display:flex; }
+
+.login-box {
+  background:var(--dark2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:2.5rem 2rem;
+  width:340px;
+  text-align:center;
+}
+.login-box h2 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.5rem; letter-spacing:6px;
+  color:var(--gold); margin-bottom:.3rem;
+}
+.login-box p { font-size:.8rem; color:var(--muted); margin-bottom:1.8rem; }
+.login-box input {
+  width:100%; padding:.8rem 1rem;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  border-radius:3px;
+  color:var(--text); font-size:.95rem;
+  outline:none; margin-bottom:.8rem;
+  transition:border-color .2s;
+}
+.login-box input:focus { border-color:var(--gold); }
+.login-btn {
+  width:100%; padding:.85rem;
+  background:var(--grad); border:none; border-radius:3px;
+  color:#000; font-weight:700; font-size:.85rem;
+  letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; transition:filter .2s;
+}
+.login-btn:hover { filter:brightness(1.1); }
+.login-err {
+  font-size:.78rem; color:var(--danger);
+  margin-top:.6rem; display:none;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+nav {
+  position:fixed; top:0; width:100%;
+  padding:1rem 5%;
+  display:flex; justify-content:space-between; align-items:center;
+  z-index:1000;
+  background:rgba(8,8,13,.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  transition:all .3s;
+}
+nav.scrolled { padding:.6rem 5%; background:rgba(8,8,13,.97); }
+
+.logo {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.4rem; letter-spacing:8px;
+  background:var(--grad);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  cursor:pointer;
+}
+
+.nav-links { display:flex; gap:2.5rem; list-style:none; }
+.nav-links a {
+  color:var(--muted); text-decoration:none;
+  font-size:.75rem; letter-spacing:2px; text-transform:uppercase; font-weight:500;
+  transition:color .3s; position:relative;
+}
+.nav-links a::after {
+  content:''; position:absolute; bottom:-4px; left:0;
+  width:0; height:1px; background:var(--gold); transition:width .3s;
+}
+.nav-links a:hover { color:var(--gold); }
+.nav-links a:hover::after { width:100%; }
+
+.nav-right { display:flex; align-items:center; gap:1.2rem; }
+.nav-social a {
+  color:var(--muted); font-size:1rem; text-decoration:none;
+  transition:color .3s;
+}
+.nav-social a:hover { color:var(--gold); }
+.menu-toggle { display:none; background:none; border:none; color:var(--text); font-size:1.4rem; cursor:pointer; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  height:100vh; min-height:600px;
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  background:radial-gradient(ellipse at 50% 70%, #1c1400 0%, var(--dark) 65%);
+}
+
+.hero-bg-kus {
+  position:absolute;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:38vw; line-height:1;
+  color:rgba(212,168,50,.028);
+  letter-spacing:4vw;
+  pointer-events:none; user-select:none;
+  top:50%; left:50%; transform:translate(-50%,-50%);
+}
+
+.hero-overlay {
+  position:absolute; bottom:0; left:0;
+  width:100%; height:45%;
+  background:linear-gradient(to top, var(--dark), transparent);
+}
+
+.hero-photo {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center 20%;
+  opacity:.34; pointer-events:none;
+}
+
+.hero-content {
+  position:relative; z-index:5; text-align:center;
+}
+
+.hero-eyebrow {
+  font-size:.7rem; letter-spacing:6px; text-transform:uppercase;
+  color:var(--gold); margin-bottom:1.2rem;
+  animation:fadeUp .8s ease;
+}
+
+.hero h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(5.5rem,18vw,14rem);
+  letter-spacing:1.5rem; line-height:.9;
+  animation:fadeUp 1s ease .1s backwards;
+  background:linear-gradient(170deg,#fff 0%,#d4a832 70%,#7a5c0a 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.hero-sub {
+  font-size:.85rem; letter-spacing:5px; text-transform:uppercase;
+  color:var(--muted); margin-top:1rem;
+  animation:fadeUp 1s ease .25s backwards;
+}
+
+.hero-cta {
+  margin-top:2.5rem;
+  display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;
+  animation:fadeUp 1s ease .4s backwards;
+}
+
+.btn {
+  display:inline-flex; align-items:center; gap:.6rem;
+  padding:.85rem 2.2rem;
+  border-radius:2px; border:none; cursor:pointer;
+  font-family:'Inter',sans-serif;
+  font-size:.75rem; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase;
+  text-decoration:none; transition:all .3s;
+}
+.btn-gold { background:var(--grad); color:#000; }
+.btn-gold:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(212,168,50,.3); }
+.btn-outline { background:transparent; border:1px solid rgba(255,255,255,.25); color:var(--text); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }
+
+.scroll-cue {
+  position:absolute; bottom:2.5rem; left:50%;
+  transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:.5rem;
+}
+.scroll-cue span { font-size:.6rem; letter-spacing:4px; text-transform:uppercase; color:var(--muted); }
+.scroll-line {
+  width:1px; height:48px;
+  background:linear-gradient(to bottom, var(--gold), transparent);
+  animation:scrollPulse 2s ease infinite;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+section { padding:7rem 5%; }
+
+.sec-header { text-align:center; margin-bottom:4rem; }
+.sec-eyebrow { font-size:.68rem; letter-spacing:5px; text-transform:uppercase; color:var(--gold); margin-bottom:.6rem; }
+.sec-title {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.2rem,5vw,4rem); letter-spacing:3px;
+}
+.sec-title::after {
+  content:''; display:block; width:50px; height:2px;
+  background:var(--grad); margin:.8rem auto 0;
+}
+
+/* ============================================================
+   DISCOGRAPHIE
+   ============================================================ */
+#musique { background:var(--dark2); }
+
+.disco-grid { display:flex; flex-direction:column; gap:2rem; max-width:1080px; margin:0 auto; }
+
+.release {
+  display:grid; grid-template-columns:240px 1fr;
+  border:1px solid var(--border);
+  border-radius:4px; overflow:hidden;
+  background:rgba(255,255,255,.02);
+  transition:border-color .4s, box-shadow .4s;
+}
+.release:hover { border-color:var(--border2); box-shadow:0 0 40px rgba(212,168,50,.06); }
+.release.featured { border-color:rgba(212,168,50,.18); }
+
+.release-thumb {
+  position:relative; aspect-ratio:1; background:#0d0d0d; overflow:hidden;
+}
+.release-thumb img {
+  width:100%; height:100%; object-fit:cover; transition:transform .5s;
+}
+.release:hover .release-thumb img { transform:scale(1.06); }
+
+.release-placeholder {
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.5rem; letter-spacing:4px;
+  color:rgba(212,168,50,.2);
+  background:linear-gradient(135deg, #0f0f0f, #1a1200);
+}
+
+.release-badge {
+  position:absolute; top:10px; left:10px;
+  background:var(--grad); color:#000;
+  font-size:.65rem; font-weight:700; letter-spacing:2px;
+  padding:3px 10px;
+}
+
+.release-body { padding:2rem; display:flex; flex-direction:column; gap:.8rem; }
+.release-type { font-size:.65rem; letter-spacing:4px; text-transform:uppercase; color:var(--gold); }
+.release-name { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; letter-spacing:3px; line-height:1; }
+.release-meta { font-size:.75rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+.release-desc { font-size:.9rem; color:rgba(255,255,255,.6); line-height:1.85; }
+
+.tracklist { display:flex; flex-direction:column; gap:.2rem; }
+.track {
+  display:flex; align-items:center; gap:.8rem;
+  padding:.5rem .7rem; border-radius:3px;
+  cursor:pointer; text-decoration:none; color:inherit;
+  transition:background .2s;
+}
+.track:hover { background:rgba(212,168,50,.07); }
+.track-n { font-size:.72rem; color:var(--muted); width:18px; text-align:center; }
+.track-t { flex:1; font-size:.88rem; font-weight:500; }
+.track-badge { font-size:.6rem; letter-spacing:2px; text-transform:uppercase; color:var(--gold); }
+.track-ico { font-size:.75rem; color:var(--gold); opacity:0; transition:opacity .2s; }
+.track:hover .track-ico { opacity:1; }
+
+.release-links { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.3rem; }
+.pl-btn {
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.5rem 1rem;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:3px; color:rgba(255,255,255,.6);
+  text-decoration:none; font-size:.72rem;
+  letter-spacing:1px; transition:all .3s;
+}
+.pl-btn:hover { background:rgba(212,168,50,.1); border-color:var(--gold); color:var(--gold); }
+.pl-btn.sp { color:#1db954; border-color:rgba(29,185,84,.25); }
+.pl-btn.sp:hover { background:rgba(29,185,84,.1); border-color:#1db954; }
+.pl-btn.yt { color:#ff4444; border-color:rgba(255,68,68,.25); }
+.pl-btn.yt:hover { background:rgba(255,68,68,.1); border-color:#ff4444; }
+
+/* Coming soon banner */
+.cs-banner {
+  max-width:680px; margin:0 auto 3rem;
+  border:1px solid rgba(212,168,50,.2);
+  border-radius:4px;
+  padding:2rem;
+  text-align:center;
+  background:rgba(212,168,50,.04);
+}
+.cs-banner .sec-eyebrow { margin-bottom:.5rem; }
+.cs-banner h3 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:4px; margin-bottom:.3rem; }
+.cs-banner p { font-size:.82rem; color:var(--muted); }
+
+/* ============================================================
+   VIDÉOS
+   ============================================================ */
+.video-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.2rem; max-width:1100px; margin:0 auto; }
+
+.vcard {
+  position:relative; border-radius:4px; overflow:hidden;
+  aspect-ratio:16/9; cursor:pointer; background:#0d0d0d;
+}
+.vcard img { width:100%; height:100%; object-fit:cover; transition:transform .5s; display:block; }
+.vcard:hover img { transform:scale(1.08); }
+
+.vcard-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.2) 55%, transparent 100%);
+  display:flex; flex-direction:column; justify-content:flex-end; padding:1.2rem;
+  transition:all .3s;
+}
+
+.vplay {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-58%);
+  width:54px; height:54px; border-radius:50%;
+  background:rgba(212,168,50,.15);
+  border:2px solid rgba(212,168,50,.5);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; color:var(--gold);
+  transition:all .3s; backdrop-filter:blur(4px);
+}
+.vcard:hover .vplay { background:var(--gold); color:#000; transform:translate(-50%,-58%) scale(1.08); }
+
+.vcard-tag { font-size:.6rem; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:.3rem; }
+.vcard-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; }
+.vcard-year { font-size:.72rem; color:var(--muted); margin-top:.15rem; }
+
+.vcard-soon {
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  height:100%;
+  background:linear-gradient(135deg, #140f00, #0d0d0d);
+  gap:.8rem;
+}
+.vcard-soon i { font-size:2rem; color:rgba(212,168,50,.25); }
+.vcard-soon span { font-size:.65rem; letter-spacing:4px; text-transform:uppercase; color:rgba(212,168,50,.35); }
+
+/* ============================================================
+   BIO
+   ============================================================ */
+#bio { background:var(--dark2); }
+
+.bio-wrap {
+  max-width:1100px; margin:0 auto;
+  display:grid; grid-template-columns:1fr 1.3fr;
+  gap:6rem; align-items:center;
+}
+
+.bio-left { position:relative; }
+.bio-frame {
+  aspect-ratio:3/4;
+  background:rgba(212,168,50,.04);
+  border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:6rem; letter-spacing:1rem;
+  color:rgba(212,168,50,.12); overflow:hidden; position:relative;
+}
+.bio-frame img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.bio-corner {
+  position:absolute; bottom:-18px; right:-18px;
+  width:120px; height:120px;
+  border:2px solid rgba(212,168,50,.15); z-index:-1;
+}
+.bio-chip {
+  position:absolute; bottom:1.5rem; left:-1.8rem;
+  background:var(--dark); border:1px solid var(--border2);
+  padding:.8rem 1.2rem;
+}
+.bio-chip-num { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--gold); line-height:1; }
+.bio-chip-label { font-size:.6rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); }
+
+.bio-right { display:flex; flex-direction:column; gap:1.4rem; }
+.bio-right h2 { font-family:'Bebas Neue',sans-serif; font-size:3.2rem; letter-spacing:3px; line-height:1.05; }
+.bio-right h2 em { color:var(--gold); font-style:normal; }
+.bio-right p { font-size:.95rem; color:rgba(255,255,255,.62); line-height:1.9; }
+.bio-tags { display:flex; flex-wrap:wrap; gap:.5rem; }
+.btag {
+  padding:.3rem .8rem;
+  border:1px solid rgba(212,168,50,.2);
+  font-size:.65rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); border-radius:2px;
+}
+
+/* ============================================================
+   ACTUALITÉS
+   ============================================================ */
+.news-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:1.2rem; max-width:1100px; margin:0 auto; }
+
+.ncard {
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--border);
+  border-radius:4px; overflow:hidden;
+  transition:all .4s;
+}
+.ncard:hover { border-color:var(--border2); transform:translateY(-5px); }
+.ncard.pinned { border-color:rgba(212,168,50,.15); }
+
+.ncard-img {
+  width:100%; height:160px; object-fit:cover; display:block;
+  background:linear-gradient(135deg, #1a1200, #0a0a0f);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue',sans-serif; font-size:2.5rem;
+  color:rgba(212,168,50,.18); letter-spacing:3px;
+}
+.ncard-img img { width:100%; height:100%; object-fit:cover; }
+.ncard-img.ncard-player { height:152px; background:#000; padding:0; }
+.ncard-img.ncard-player iframe { width:100%; height:152px; border:none; display:block; }
+
+.ncard-body { padding:1.3rem; }
+.ncard-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:.6rem; }
+.ncard-date { font-size:.67rem; letter-spacing:2px; text-transform:uppercase; color:var(--gold); }
+.ncard-tag {
+  font-size:.62rem; letter-spacing:1px; text-transform:uppercase;
+  padding:2px 8px;
+  background:rgba(212,168,50,.1); border:1px solid rgba(212,168,50,.2); color:var(--gold);
+}
+.ncard-body h3 { font-size:1rem; font-weight:600; margin-bottom:.5rem; line-height:1.4; }
+.ncard-body p { font-size:.83rem; color:var(--muted); line-height:1.75; }
+
+/* ============================================================
+   CONTACT
+   ============================================================ */
+#contact { background:var(--dark2); }
+
+.contact-wrap { display:grid; grid-template-columns:1fr 1fr; gap:5rem; max-width:960px; margin:0 auto; }
+
+.contact-block h3 {
+  font-family:'Bebas Neue',sans-serif; font-size:1.6rem;
+  letter-spacing:3px; margin-bottom:1.2rem; color:var(--gold);
+}
+.citem {
+  display:flex; align-items:flex-start; gap:.9rem;
+  padding:.9rem; background:rgba(255,255,255,.02);
+  border:1px solid var(--border); border-radius:3px; margin-bottom:.6rem;
+  transition:border-color .3s;
+}
+.citem:hover { border-color:var(--border2); }
+.citem i { color:var(--gold); margin-top:2px; width:14px; }
+.citem-inner { display:flex; flex-direction:column; gap:.15rem; }
+.citem-label { font-size:.62rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); }
+.citem-val { font-size:.88rem; }
+.citem-val a { color:inherit; text-decoration:none; }
+.citem-val a:hover { color:var(--gold); }
+
+.social-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+.slink {
+  display:flex; align-items:center; gap:.7rem;
+  padding:.75rem 1rem;
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:3px; text-decoration:none;
+  color:rgba(255,255,255,.6); font-size:.78rem; font-weight:500;
+  transition:all .3s;
+}
+.slink:hover { border-color:var(--border2); color:var(--gold); background:rgba(212,168,50,.07); }
+
+/* ============================================================
+   NEWSLETTER
+   ============================================================ */
+.newsletter {
+  text-align:center; padding:5rem 5%;
+  background:linear-gradient(135deg, #150f00 0%, var(--dark) 100%);
+  border-top:1px solid var(--border);
+}
+.newsletter h2 { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:5px; margin-bottom:.5rem; }
+.newsletter p { color:var(--muted); font-size:.9rem; margin-bottom:2rem; }
+.nl-form { display:flex; max-width:440px; margin:0 auto; }
+.nl-form input {
+  flex:1; padding:.9rem 1.2rem;
+  background:rgba(255,255,255,.05); border:1px solid var(--border);
+  border-right:none; border-radius:3px 0 0 3px;
+  color:var(--text); font-size:.9rem; outline:none;
+  transition:border-color .2s;
+}
+.nl-form input:focus { border-color:var(--gold); }
+.nl-form button {
+  padding:.9rem 1.5rem; background:var(--grad); border:none;
+  border-radius:0 3px 3px 0; color:#000; font-weight:700;
+  font-size:.75rem; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; transition:filter .2s;
+}
+.nl-form button:hover { filter:brightness(1.1); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background:#050508; padding:2.5rem 5%;
+  border-top:1px solid rgba(255,255,255,.04);
+}
+.footer-inner {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:1.5rem;
+}
+.footer-logo { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:8px; color:rgba(212,168,50,.4); }
+.footer-links { display:flex; gap:2rem; flex-wrap:wrap; }
+.footer-links a {
+  font-size:.7rem; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,.25); text-decoration:none; transition:color .3s;
+}
+.footer-links a:hover { color:var(--gold); }
+.footer-social { display:flex; gap:.8rem; }
+.footer-social a {
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,.3); font-size:.8rem; text-decoration:none;
+  transition:all .3s;
+}
+.footer-social a:hover { border-color:var(--gold); color:var(--gold); }
+.footer-copy { font-size:.68rem; color:rgba(255,255,255,.18); letter-spacing:1px; margin-top:1.2rem; text-align:center; }
+
+/* ============================================================
+   VIDEO MODAL
+   ============================================================ */
+#vmodal {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.97); z-index:9990;
+  align-items:center; justify-content:center;
+}
+#vmodal.on { display:flex; }
+.vmodal-inner { width:90%; max-width:960px; aspect-ratio:16/9; }
+.vmodal-close {
+  position:absolute; top:1.5rem; right:2rem;
+  font-size:1.8rem; color:rgba(255,255,255,.5);
+  cursor:pointer; background:none; border:none; transition:color .3s;
+}
+.vmodal-close:hover { color:var(--gold); }
+
+/* ============================================================
+   EDITABLE HIGHLIGHT (admin mode)
+   ============================================================ */
+body.admin-mode [data-editable]:hover {
+  outline:1px dashed rgba(212,168,50,.5);
+  cursor:pointer;
+}
+body.admin-mode [data-editable]:hover::after {
+  content:'✏️';
+  position:absolute; top:4px; right:4px;
+  font-size:.8rem; pointer-events:none; z-index:100;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(22px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes scrollPulse {
+  0%,100% { opacity:.4; } 50% { opacity:1; }
+}
+
+.fi { opacity:0; transform:translateY(22px); transition:opacity .7s ease, transform .7s ease; }
+.fi.on { opacity:1; transform:translateY(0); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:900px) {
+  .release { grid-template-columns:1fr; }
+  .bio-wrap { grid-template-columns:1fr; }
+  .bio-left { display:none; }
+  .contact-wrap { grid-template-columns:1fr; gap:3rem; }
+}
+@media(max-width:720px) {
+  .nav-links { display:none; position:absolute; top:100%; left:0; width:100%; background:rgba(8,8,13,.98); flex-direction:column; padding:1.5rem 5%; gap:1.2rem; border-bottom:1px solid var(--border); }
+  .nav-links.open { display:flex; }
+  .menu-toggle { display:block; }
+  .nav-right .nav-social { display:none; }
+  section { padding:5rem 5%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN OVERLAY
+     ============================================================ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>KUS</h2>
+    <p>Panneau d'administration — accès restreint</p>
+    <input type="password" id="login-pw" placeholder="Mot de passe" autocomplete="current-password">
+    <button class="login-btn" onclick="tryLogin()">Entrer</button>
+    <p class="login-err" id="login-err">Mot de passe incorrect</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN BAR
+     ============================================================ -->
+<div id="admin-bar">
+  <div class="admin-bar-left">
+    <span class="admin-bar-label">⚙ Admin</span>
+    <span class="admin-bar-hint">Clique sur n'importe quel élément pour le modifier</span>
+  </div>
+  <div class="admin-bar-right">
+    <button class="ab-btn ghost" onclick="togglePanel()"><i class="fas fa-sliders-h"></i> Panneau</button>
+    <button class="ab-btn primary" onclick="saveAll()"><i class="fas fa-save"></i> Sauvegarder</button>
+    <button class="ab-btn ghost" onclick="exportSite()"><i class="fas fa-file-export"></i> Exporter</button>
+    <button class="ab-btn danger" onclick="exitAdmin()">Quitter</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN PANEL
+     ============================================================ -->
+<div id="admin-panel">
+  <div class="ap-header">
+    <h2>Administration</h2>
+    <button class="ap-close" onclick="togglePanel()"><i class="fas fa-times"></i></button>
+  </div>
+
+  <div class="ap-tabs">
+    <button class="ap-tab active" onclick="switchTab('general')">Général</button>
+    <button class="ap-tab" onclick="switchTab('photos')">Photos</button>
+    <button class="ap-tab" onclick="switchTab('releases')">Sorties</button>
+    <button class="ap-tab" onclick="switchTab('videos')">Vidéos</button>
+    <button class="ap-tab" onclick="switchTab('news')">Actualités</button>
+    <button class="ap-tab" onclick="switchTab('contact')">Contact</button>
+    <button class="ap-tab" onclick="switchTab('style')">Style</button>
+  </div>
+
+  <div class="ap-body">
+
+    <!-- TAB: GÉNÉRAL -->
+    <div class="ap-section active" id="tab-general">
+      <div class="field">
+        <label>Nom d'artiste</label>
+        <input type="text" id="f-artist-name" value="KUS" oninput="liveUpdate('artist-name',this.value)">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Ville</label>
+          <input type="text" id="f-city" value="Paris" oninput="liveUpdate('hero-sub-text',document.getElementById('f-city').value+' · '+document.getElementById('f-genre').value+' · Depuis '+document.getElementById('f-since').value)">
+        </div>
+        <div class="field">
+          <label>Genre</label>
+          <input type="text" id="f-genre" value="Rap Français" oninput="liveUpdate('hero-sub-text',document.getElementById('f-city').value+' · '+this.value+' · Depuis '+document.getElementById('f-since').value)">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Label</label>
+          <input type="text" id="f-label" value="APN No Limite" oninput="liveUpdate('label-text',this.value)">
+        </div>
+        <div class="field">
+          <label>Depuis (année)</label>
+          <input type="text" id="f-since" value="2015" oninput="liveUpdate('hero-sub-text',document.getElementById('f-city').value+' · '+document.getElementById('f-genre').value+' · Depuis '+this.value)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Accroche hero (sous le nom)</label>
+        <input type="text" id="f-hero-tagline" value="Nouveau single Maclaren disponible" oninput="liveUpdate('hero-tagline',this.value)">
+      </div>
+      <div class="field">
+        <label>Lien bouton hero principal</label>
+        <input type="text" id="f-hero-link" value="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL">
+      </div>
+      <hr class="ap-divider">
+      <div class="field">
+        <label>Texte biographie (paragraphe 1)</label>
+        <textarea id="f-bio1" oninput="liveUpdate('bio-p1',this.value)">KUS est un rappeur parisien indépendant, fondateur du label APN No Limite. Il fait ses premiers pas dans le hip-hop français en 2015 avec son EP Hors-Zone, projet brut et authentique qui lui forge une identité forte dans la scène rap indé.</textarea>
+      </div>
+      <div class="field">
+        <label>Texte biographie (paragraphe 2)</label>
+        <textarea id="f-bio2" oninput="liveUpdate('bio-p2',this.value)">En 2017 il revient avec Mon Renoi — un clip qui confirme son authenticité. En 2025, il signe son retour avec le sulfureux Maclaren, annonçant un projet pour 2026.</textarea>
+      </div>
+    </div>
+
+    <!-- TAB: PHOTOS -->
+    <div class="ap-section" id="tab-photos">
+      <div class="ap-hint">Ajoute tes propres photos ici. Elles sont intégrées directement dans le site (compressées automatiquement) — clique sur "Sauvegarder" en haut pour les conserver.</div>
+
+      <div class="field">
+        <label>Photo de fond — Accueil</label>
+        <div class="ap-photo">
+          <div class="ap-photo-preview ap-photo-preview-lg" id="hero-photo-preview"><i class="fas fa-image"></i></div>
+          <div class="ap-photo-actions">
+            <label class="ap-btn ap-upload-btn">
+              <i class="fas fa-camera"></i> Choisir une photo
+              <input type="file" accept="image/*" style="display:none" onchange="updateHeroImg(this)">
+            </label>
+            <button class="icon-btn del" onclick="removeHeroImg()" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="ap-divider">
+
+      <div class="field">
+        <label>Photo de bio / profil</label>
+        <div class="ap-photo">
+          <div class="ap-photo-preview ap-photo-preview-lg" id="bio-photo-preview"><i class="fas fa-image"></i></div>
+          <div class="ap-photo-actions">
+            <label class="ap-btn ap-upload-btn">
+              <i class="fas fa-camera"></i> Choisir une photo
+              <input type="file" accept="image/*" style="display:none" onchange="updateBioImg(this)">
+            </label>
+            <button class="icon-btn del" onclick="removeBioImg()" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ap-hint" style="margin-top:1.5rem;">Pour les photos de chaque sortie, clip ou actualité, va dans l'onglet correspondant (Sorties / Vidéos / Actualités) — chaque fiche a son propre bouton photo.</div>
+    </div>
+
+    <!-- TAB: SORTIES -->
+    <div class="ap-section" id="tab-releases">
+      <div class="ap-hint">Modifie les infos de chaque sortie, et ajoute une photo pour illustrer la pochette.</div>
+
+      <div id="releases-list"></div>
+
+      <button class="ap-btn full" onclick="addRelease()">
+        <i class="fas fa-plus"></i> Ajouter une sortie
+      </button>
+    </div>
+
+    <!-- TAB: VIDÉOS -->
+    <div class="ap-section" id="tab-videos">
+      <div class="ap-hint">Colle l'ID YouTube (ex: <strong>8x4AWmxTn9A</strong> depuis youtube.com/watch?v=<u>8x4AWmxTn9A</u>), ou ajoute directement une photo de couverture personnalisée.</div>
+
+      <div id="videos-list"></div>
+
+      <button class="ap-btn full" onclick="addVideo()">
+        <i class="fas fa-plus"></i> Ajouter une vidéo
+      </button>
+    </div>
+
+    <!-- TAB: ACTUALITÉS -->
+    <div class="ap-section" id="tab-news">
+      <div class="ap-hint">Ajoute une photo à chaque actualité pour l'illustrer.</div>
+      <div id="news-list"></div>
+      <button class="ap-btn full" onclick="addNews()">
+        <i class="fas fa-plus"></i> Ajouter une actualité
+      </button>
+    </div>
+
+    <!-- TAB: CONTACT -->
+    <div class="ap-section" id="tab-contact">
+      <div class="field">
+        <label>Email général</label>
+        <input type="email" id="f-email" value="contact@kus-officiel.com" oninput="liveUpdate('email-contact',this.value)">
+      </div>
+      <div class="field">
+        <label>Email booking</label>
+        <input type="email" id="f-booking" value="booking@kus-officiel.com" oninput="liveUpdate('email-booking',this.value)">
+      </div>
+      <hr class="ap-divider">
+      <div class="field">
+        <label>Lien Spotify</label>
+        <input type="text" id="f-spotify" value="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL">
+      </div>
+      <div class="field">
+        <label>Lien YouTube (chaîne)</label>
+        <input type="text" id="f-youtube" value="">
+      </div>
+      <div class="field">
+        <label>Lien Instagram</label>
+        <input type="text" id="f-instagram" value="">
+      </div>
+      <div class="field">
+        <label>Lien TikTok</label>
+        <input type="text" id="f-tiktok" value="">
+      </div>
+      <div class="field">
+        <label>Lien Facebook</label>
+        <input type="text" id="f-facebook" value="">
+      </div>
+      <div class="field">
+        <label>Lien Snapchat</label>
+        <input type="text" id="f-snapchat" value="">
+      </div>
+      <button class="ap-btn full" onclick="applySocials()"><i class="fas fa-sync"></i> Appliquer les réseaux</button>
+    </div>
+
+    <!-- TAB: STYLE -->
+    <div class="ap-section" id="tab-style">
+      <div class="field">
+        <label>Couleur principale</label>
+        <div class="color-row" id="color-swatches">
+          <div class="color-swatch selected" style="background:#d4a832" data-color="#d4a832" onclick="pickColor(this)"></div>
+          <div class="color-swatch" style="background:#e05c5c" data-color="#e05c5c" onclick="pickColor(this)"></div>
+          <div class="color-swatch" style="background:#5ce0b0" data-color="#5ce0b0" onclick="pickColor(this)"></div>
+          <div class="color-swatch" style="background:#7c5ce0" data-color="#7c5ce0" onclick="pickColor(this)"></div>
+          <div class="color-swatch" style="background:#5ca8e0" data-color="#5ca8e0" onclick="pickColor(this)"></div>
+          <div class="color-swatch" style="background:#e08c3c" data-color="#e08c3c" onclick="pickColor(this)"></div>
+        </div>
+        <input type="color" id="custom-color" style="margin-top:.6rem;width:100%;height:36px;border:none;background:none;cursor:pointer;" value="#d4a832" oninput="applyColor(this.value)">
+      </div>
+      <hr class="ap-divider">
+      <div class="toggle-row">
+        <span class="toggle-label">Bannière "Nouveau projet 2026"</span>
+        <label class="toggle"><input type="checkbox" id="tog-banner" checked onchange="toggleBanner(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Section Newsletter</span>
+        <label class="toggle"><input type="checkbox" id="tog-nl" checked onchange="document.querySelector('.newsletter').style.display=this.checked?'':'none'"><span class="toggle-slider"></span></label>
+      </div>
+      <hr class="ap-divider">
+      <div class="field">
+        <label>Mot de passe admin (actuel : kus2026)</label>
+        <input type="password" id="f-newpw" placeholder="Nouveau mot de passe">
+      </div>
+      <button class="ap-btn full" onclick="changePassword()"><i class="fas fa-lock"></i> Changer le mot de passe</button>
+    </div>
+
+  </div><!-- ap-body -->
+</div><!-- admin-panel -->
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav id="navbar">
+  <div class="logo" onclick="scrollTo({top:0,behavior:'smooth'})">KUS</div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#musique">Discographie</a></li>
+    <li><a href="#videos">Vidéos</a></li>
+    <li><a href="#bio">Bio</a></li>
+    <li><a href="#actu">Actualités</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="nav-social" style="display:flex;gap:1rem;">
+      <a href="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL" target="_blank" id="nav-spotify"><i class="fab fa-spotify"></i></a>
+      <a href="#" target="_blank" id="nav-youtube"><i class="fab fa-youtube"></i></a>
+      <a href="#" target="_blank" id="nav-instagram"><i class="fab fa-instagram"></i></a>
+    </div>
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero" id="accueil">
+  <div class="hero-bg-kus">KUS</div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow" id="hero-tagline" data-editable>APN No Limite · Paris · Hip-Hop</p>
+    <h1 id="artist-name">KUS</h1>
+    <p class="hero-sub" id="hero-sub-text" data-editable>Paris · Rap Français · Depuis 2015</p>
+    <div class="hero-cta">
+      <a href="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL" target="_blank" class="btn btn-gold" id="hero-btn">
+        <i class="fab fa-spotify"></i> Écouter Maclaren
+      </a>
+      <a href="#musique" class="btn btn-outline">
+        <i class="fas fa-compact-disc"></i> Discographie
+      </a>
+    </div>
+  </div>
+  <div class="scroll-cue">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     DISCOGRAPHIE
+     ============================================================ -->
+<section id="musique">
+  <div class="sec-header fi">
+    <p class="sec-eyebrow" id="label-text">APN No Limite</p>
+    <h2 class="sec-title">Discographie</h2>
+  </div>
+  <div class="cs-banner fi" id="cs-banner">
+    <p class="sec-eyebrow">Bientôt</p>
+    <h3>Nouveau Projet 2026</h3>
+    <p>KUS prépare son prochain projet — date de sortie à venir.<br>Inscris-toi à la newsletter pour être le premier informé.</p>
+  </div>
+  <div class="disco-grid fi" id="disco-grid">
+    <!-- rendered by JS -->
+  </div>
+</section>
+
+<!-- ============================================================
+     VIDÉOS
+     ============================================================ -->
+<section id="videos" style="background:var(--dark2);">
+  <div class="sec-header fi">
+    <p class="sec-eyebrow">Clips & Visuels</p>
+    <h2 class="sec-title">Vidéos</h2>
+  </div>
+  <div class="video-grid fi" id="video-grid">
+    <!-- rendered by JS -->
+  </div>
+</section>
+
+<!-- ============================================================
+     BIO
+     ============================================================ -->
+<section id="bio">
+  <div class="bio-wrap">
+    <div class="bio-left fi">
+      <div class="bio-frame" id="bio-frame">KUS</div>
+      <div class="bio-corner"></div>
+      <div class="bio-chip">
+        <div class="bio-chip-num">2015</div>
+        <div class="bio-chip-label">Début de carrière</div>
+      </div>
+    </div>
+    <div class="bio-right fi">
+      <h2>Paris.<br><em>APN No Limite.</em></h2>
+      <p id="bio-p1" data-editable>KUS est un rappeur parisien indépendant, fondateur du label APN No Limite. Il fait ses premiers pas dans le hip-hop français en 2015 avec son EP Hors-Zone, projet brut et authentique qui lui forge une identité forte dans la scène rap indé.</p>
+      <p id="bio-p2" data-editable>En 2017 il revient avec Mon Renoi — un clip qui confirme son authenticité. En 2025, il signe son retour avec le sulfureux Maclaren, annonçant un projet pour 2026.</p>
+      <div class="bio-tags">
+        <span class="btag">Hip-Hop</span>
+        <span class="btag">Rap FR</span>
+        <span class="btag">Paris</span>
+        <span class="btag">Indépendant</span>
+        <span class="btag">APN No Limite</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ACTUALITÉS
+     ============================================================ -->
+<section id="actu" style="background:var(--dark2);">
+  <div class="sec-header fi">
+    <p class="sec-eyebrow">News</p>
+    <h2 class="sec-title">Actualités</h2>
+  </div>
+  <div class="news-grid fi" id="news-grid">
+    <!-- rendered by JS -->
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT
+     ============================================================ -->
+<section id="contact">
+  <div class="sec-header fi">
+    <p class="sec-eyebrow">APN No Limite</p>
+    <h2 class="sec-title">Contact</h2>
+  </div>
+  <div class="contact-wrap">
+    <div class="contact-block fi">
+      <h3>Infos & Booking</h3>
+      <div class="citem"><i class="fas fa-map-marker-alt"></i><div class="citem-inner"><span class="citem-label">Basé à</span><span class="citem-val">Paris, France</span></div></div>
+      <div class="citem"><i class="fas fa-tag"></i><div class="citem-inner"><span class="citem-label">Label</span><span class="citem-val" id="contact-label">APN No Limite</span></div></div>
+      <div class="citem"><i class="fas fa-envelope"></i><div class="citem-inner"><span class="citem-label">Contact</span><span class="citem-val"><a href="mailto:contact@kus-officiel.com" id="email-contact">contact@kus-officiel.com</a></span></div></div>
+      <div class="citem"><i class="fas fa-microphone"></i><div class="citem-inner"><span class="citem-label">Booking / Feat</span><span class="citem-val"><a href="mailto:booking@kus-officiel.com" id="email-booking">booking@kus-officiel.com</a></span></div></div>
+    </div>
+    <div class="contact-block fi">
+      <h3>Réseaux</h3>
+      <div class="social-grid2" id="social-grid">
+        <a class="slink" href="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL" target="_blank" id="sl-spotify"><i class="fab fa-spotify" style="color:#1db954"></i> Spotify</a>
+        <a class="slink" href="#" target="_blank" id="sl-youtube"><i class="fab fa-youtube" style="color:#ff4444"></i> YouTube</a>
+        <a class="slink" href="#" target="_blank" id="sl-instagram"><i class="fab fa-instagram" style="color:#e1306c"></i> Instagram</a>
+        <a class="slink" href="#" target="_blank" id="sl-tiktok"><i class="fab fa-tiktok"></i> TikTok</a>
+        <a class="slink" href="#" target="_blank" id="sl-facebook"><i class="fab fa-facebook-f" style="color:#1877f2"></i> Facebook</a>
+        <a class="slink" href="#" target="_blank" id="sl-snapchat"><i class="fab fa-snapchat-ghost" style="color:#ffee00"></i> Snapchat</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     NEWSLETTER
+     ============================================================ -->
+<div class="newsletter">
+  <h2>Reste dans la zone</h2>
+  <p>Sois le premier informé des prochaines sorties et actualités de KUS</p>
+  <form class="nl-form" onsubmit="nlSubmit(event)">
+    <input type="email" placeholder="Ton adresse email" required>
+    <button type="submit">S'inscrire</button>
+  </form>
+</div>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">KUS</div>
+    <nav class="footer-links">
+      <a href="#musique">Discographie</a>
+      <a href="#videos">Vidéos</a>
+      <a href="#bio">Bio</a>
+      <a href="#actu">Actualités</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="footer-social">
+      <a href="https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL" target="_blank"><i class="fab fa-spotify"></i></a>
+      <a href="#" target="_blank" id="fs-youtube"><i class="fab fa-youtube"></i></a>
+      <a href="#" target="_blank" id="fs-instagram"><i class="fab fa-instagram"></i></a>
+      <a href="#" target="_blank" id="fs-tiktok"><i class="fab fa-tiktok"></i></a>
+    </div>
+  </div>
+  <p class="footer-copy">© 2026 KUS · APN No Limite · Tous droits réservés · Paris · Rap Français</p>
+  <p style="text-align:center;margin-top:.5rem;font-size:.65rem;color:rgba(255,255,255,.1);">
+    Admin : double-cliquer ici pour accéder au panneau
+    <span onclick="document.getElementById('login-overlay').classList.add('show')" style="cursor:pointer;color:rgba(212,168,50,.3);">⚙</span>
+  </p>
+</footer>
+
+<!-- ============================================================
+     VIDEO MODAL
+     ============================================================ -->
+<div id="vmodal">
+  <button class="vmodal-close" onclick="closeVid()"><i class="fas fa-times"></i></button>
+  <div class="vmodal-inner">
+    <iframe id="vframe" width="100%" height="100%" src="" frameborder="0"
+      allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* Capture pristine page source at load time, before any edit/render touches the DOM.
+   Used by exportSite() to produce a clean, redeployable file. */
+const ORIGINAL_HTML = document.documentElement.outerHTML;
+
+/* ---------- DATA ---------- */
+let DATA = {
+  adminPw: 'kus2026',
+  releases: [
+    {
+      id:1, type:'Single', name:'Maclaren', year:'2025', label:'APN No Limite · Indépendant',
+      desc:'Retour sulfureux de KUS. Le single confirme une plume acérée et un univers assumé. Bien accueilli par la communauté, il annonce le projet à venir en 2026.',
+      featured:true,
+      tracks:[{n:'1', t:'Maclaren', badge:'Single', url:'https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL'}],
+      links:[{label:'Spotify',icon:'fab fa-spotify',cls:'sp',url:'https://open.spotify.com/track/3QoMqWaYYwvP3gUCD6MzvL'},{label:'Apple Music',icon:'fab fa-apple',cls:'',url:''},{label:'Deezer',icon:'fas fa-music',cls:'',url:''}]
+    },
+    {
+      id:2, type:'Single', name:'Mon Renoi', year:'2017', label:'APN No Limite · Indépendant',
+      desc:"Après un long temps d'absence, KUS refait parler de lui dans le milieu hip-hop français. Un clip qui confirme l'authenticité de l'artiste.",
+      featured:false,
+      tracks:[{n:'1', t:'Mon Renoi', badge:'Clip Officiel', url:'https://youtu.be/ifXBZ1wNQ-M'}],
+      links:[{label:'Voir le clip',icon:'fab fa-youtube',cls:'yt',url:'https://youtu.be/ifXBZ1wNQ-M'}]
+    },
+    {
+      id:3, type:'EP', name:'Hors-Zone', year:'2015', label:'APN No Limite · Indépendant',
+      desc:"Premier EP de KUS sorti en indépendant. Un projet fondateur qui pose les bases de son univers. Le clip Déterminé reste l'un de ses morceaux les plus emblématiques.",
+      featured:false,
+      tracks:[{n:'★', t:'Déterminé', badge:'Clip Iconique', url:'https://youtu.be/8x4AWmxTn9A'}],
+      links:[{label:'Voir Déterminé',icon:'fab fa-youtube',cls:'yt',url:'https://youtu.be/8x4AWmxTn9A'}]
+    }
+  ],
+  videos: [
+    {id:1, ytId:'ifXBZ1wNQ-M', tag:'Single · Clip Officiel', title:'Mon Renoi', year:'2017'},
+    {id:2, ytId:'8x4AWmxTn9A', tag:'EP Hors-Zone · Clip Iconique', title:'Déterminé', year:'2015'},
+    {id:3, ytId:'', tag:'Single · 2025', title:'Maclaren', year:'2025', soon:true}
+  ],
+  news: [
+    {id:0, date:'2015', tag:'🎧 Sélection', title:'Hors-Zone — L\'EP fondateur, à écouter', body:"Retour sur Hors-Zone, le premier EP de KUS sorti en indépendant. Un projet brut et authentique, à écouter directement ci-dessous.", pinned:true, spotify:'https://open.spotify.com/intl-fr/album/5KlMkDio8qAq1ZbZxvCRgT?si=8XLGCjnJQRm6vPvXz9oyqg'},
+    {id:1, date:'2026', tag:'🔥 En cours', title:'Nouveau projet en préparation', body:"KUS annonce un futur projet pour 2026. Aucune date officielle pour l'instant. Inscris-toi à la newsletter pour être informé en premier.", pinned:true},
+    {id:2, date:'2025', tag:'Single', title:'Maclaren — Le retour de KUS', body:'Après plusieurs années, KUS partage un inédit sulfureux. Maclaren est bien accueilli par sa communauté et marque le début d\'un nouveau chapitre.', pinned:false},
+    {id:3, date:'2017', tag:'Clip', title:'Mon Renoi — Le come-back', body:"Après un long silence, KUS refait parler de lui dans le hip-hop français avec le single Mon Renoi, livré avec un clip qui confirme l'authenticité de l'artiste.", pinned:false}
+  ]
+};
+
+/* ---------- RENDER ---------- */
+function renderReleases() {
+  const g = document.getElementById('disco-grid');
+  g.innerHTML = DATA.releases.map(r => `
+    <div class="release ${r.featured?'featured':''} fi">
+      <div class="release-thumb">
+        ${r.img ? `<img src="${r.img}" alt="${r.name}">` : `<div class="release-placeholder">${r.name.substring(0,2).toUpperCase()}</div>`}
+        <div class="release-badge">${r.year}</div>
+      </div>
+      <div class="release-body">
+        <p class="release-type">${r.type}</p>
+        <h3 class="release-name">${r.name}</h3>
+        <p class="release-meta">${r.label}</p>
+        <p class="release-desc">${r.desc}</p>
+        <div class="tracklist">
+          ${r.tracks.map(t=>`
+            <a class="track" href="${t.url||'#'}" target="${t.url?'_blank':'_self'}">
+              <span class="track-n">${t.n}</span>
+              <span class="track-t">${t.t}</span>
+              <span class="track-badge">${t.badge}</span>
+              ${t.url?'<i class="fas fa-external-link-alt track-ico"></i>':''}
+            </a>`).join('')}
+        </div>
+        <div class="release-links">
+          ${r.links.filter(l=>l.url).map(l=>`
+            <a href="${l.url}" target="_blank" class="pl-btn ${l.cls}"><i class="${l.icon}"></i> ${l.label}</a>
+          `).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+  observeFi();
+}
+
+function renderVideos() {
+  const g = document.getElementById('video-grid');
+  g.innerHTML = DATA.videos.map(v => {
+    if (v.soon && !v.img) {
+      return `
+      <div class="vcard fi">
+        <div class="vcard-soon">
+          <i class="fas fa-film"></i>
+          <span>Clip bientôt disponible</span>
+        </div>
+        <div class="vcard-overlay" style="background:none;">
+          <p class="vcard-tag">${v.tag}</p>
+          <h3 class="vcard-title">${v.title}</h3>
+        </div>
+      </div>`;
+    }
+    const src = v.img || `https://img.youtube.com/vi/${v.ytId}/maxresdefault.jpg`;
+    const fallback = (!v.img && v.ytId) ? ` onerror="this.onerror=null;this.src='https://img.youtube.com/vi/${v.ytId}/hqdefault.jpg'"` : '';
+    return `
+    <div class="vcard fi" ${v.ytId ? `onclick="openVid('${v.ytId}')"` : ''}>
+      <img src="${src}"${fallback} alt="${v.title}">
+      <div class="vcard-overlay">
+        ${v.ytId ? '<div class="vplay"><i class="fas fa-play"></i></div>' : ''}
+        <div>
+          <p class="vcard-tag">${v.tag}</p>
+          <h3 class="vcard-title">${v.title}</h3>
+          <p class="vcard-year">${v.year}</p>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  observeFi();
+}
+
+function parseSpotifyEmbed(input){
+  if(!input) return '';
+  const raw = input.trim();
+  const m = raw.match(/open\.spotify\.com\/(?:intl-\w+\/)?(track|album|playlist|artist)\/([A-Za-z0-9]+)/);
+  if(m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
+  if(/^[A-Za-z0-9]{15,25}$/.test(raw)) return `https://open.spotify.com/embed/album/${raw}?utm_source=generator&theme=0`;
+  return '';
+}
+
+function renderNews() {
+  const g = document.getElementById('news-grid');
+  g.innerHTML = DATA.news.map(n => {
+    const embed = parseSpotifyEmbed(n.spotify);
+    const media = embed
+      ? `<div class="ncard-img ncard-player"><iframe src="${embed}" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`
+      : `<div class="ncard-img">${n.img ? `<img src="${n.img}" alt="${n.title}">` : n.title.substring(0,3).toUpperCase()}</div>`;
+    return `
+    <article class="ncard ${n.pinned?'pinned':''} fi">
+      ${media}
+      <div class="ncard-body">
+        <div class="ncard-meta">
+          <span class="ncard-date">${n.date}</span>
+          <span class="ncard-tag">${n.tag}</span>
+        </div>
+        <h3>${n.title}</h3>
+        <p>${n.body}</p>
+      </div>
+    </article>`;
+  }).join('');
+  observeFi();
+}
+
+/* ---------- ADMIN PANEL RENDER ---------- */
+function renderAdminReleases() {
+  document.getElementById('releases-list').innerHTML = DATA.releases.map((r,i)=>`
+    <div class="ap-card">
+      <div class="ap-card-header">
+        <span class="ap-card-title">${r.year} · ${r.type} · ${r.name}</span>
+        <div class="ap-card-actions">
+          <button class="icon-btn del" onclick="delRelease(${r.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="ap-photo">
+        <div class="ap-photo-preview" style="background-image:${r.img ? `url('${r.img}')` : 'none'}">${r.img ? '' : '<i class="fas fa-image"></i>'}</div>
+        <div class="ap-photo-actions">
+          <label class="ap-btn ap-upload-btn">
+            <i class="fas fa-camera"></i> ${r.img ? 'Changer la photo' : 'Ajouter une photo'}
+            <input type="file" accept="image/*" style="display:none" onchange="updateReleaseImg(${r.id},this)">
+          </label>
+          ${r.img ? `<button class="icon-btn del" onclick="removeReleaseImg(${r.id})" title="Supprimer"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Type</label>
+          <select onchange="updateRelease(${r.id},'type',this.value)">
+            ${['EP','Single','Album','Mixtape'].map(t=>`<option ${r.type===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Année</label>
+          <input type="text" value="${r.year}" oninput="updateRelease(${r.id},'year',this.value)">
+        </div>
+      </div>
+      <div class="field"><label>Titre</label>
+        <input type="text" value="${r.name}" oninput="updateRelease(${r.id},'name',this.value)">
+      </div>
+      <div class="field"><label>Label / infos</label>
+        <input type="text" value="${r.label}" oninput="updateRelease(${r.id},'label',this.value)">
+      </div>
+      <div class="field"><label>Description</label>
+        <textarea oninput="updateRelease(${r.id},'desc',this.value)">${r.desc}</textarea>
+      </div>
+      <div class="field"><label>Titre du morceau phare</label>
+        <input type="text" value="${r.tracks[0]?.t||''}" oninput="updateTrack(${r.id},0,'t',this.value)">
+      </div>
+      <div class="field"><label>Lien du morceau (YouTube / Spotify)</label>
+        <input type="text" value="${r.tracks[0]?.url||''}" oninput="updateTrack(${r.id},0,'url',this.value)">
+      </div>
+      <div class="field"><label>Lien Spotify</label>
+        <input type="text" value="${r.links.find(l=>l.cls==='sp')?.url||''}" oninput="updateLink(${r.id},'sp',this.value)">
+      </div>
+      <div class="field"><label>Lien YouTube (clip)</label>
+        <input type="text" value="${r.links.find(l=>l.cls==='yt')?.url||''}" oninput="updateLink(${r.id},'yt',this.value)">
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminVideos() {
+  document.getElementById('videos-list').innerHTML = DATA.videos.map((v,i)=>`
+    <div class="ap-card">
+      <div class="ap-card-header">
+        <span class="ap-card-title">${v.title} (${v.year})</span>
+        <div class="ap-card-actions">
+          <button class="icon-btn del" onclick="delVideo(${v.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="ap-photo">
+        <div class="ap-photo-preview" style="background-image:${v.img ? `url('${v.img}')` : 'none'}">${v.img ? '' : '<i class="fas fa-image"></i>'}</div>
+        <div class="ap-photo-actions">
+          <label class="ap-btn ap-upload-btn">
+            <i class="fas fa-camera"></i> ${v.img ? 'Changer la photo' : 'Ajouter une photo'}
+            <input type="file" accept="image/*" style="display:none" onchange="updateVideoImg(${v.id},this)">
+          </label>
+          ${v.img ? `<button class="icon-btn del" onclick="removeVideoImg(${v.id})" title="Supprimer"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+      </div>
+      <div class="field"><label>Titre</label>
+        <input type="text" value="${v.title}" oninput="updateVideo(${v.id},'title',this.value)">
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Année</label>
+          <input type="text" value="${v.year}" oninput="updateVideo(${v.id},'year',this.value)">
+        </div>
+        <div class="field"><label>Tag (ex: Clip Officiel)</label>
+          <input type="text" value="${v.tag}" oninput="updateVideo(${v.id},'tag',this.value)">
+        </div>
+      </div>
+      <div class="field"><label>ID YouTube (laisser vide = "bientôt dispo")</label>
+        <input type="text" value="${v.ytId}" placeholder="ex: 8x4AWmxTn9A"
+          oninput="updateVideo(${v.id},'ytId',this.value);updateVideo(${v.id},'soon',!this.value)">
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminNews() {
+  document.getElementById('news-list').innerHTML = DATA.news.map((n,i)=>`
+    <div class="ap-card">
+      <div class="ap-card-header">
+        <span class="ap-card-title">${n.date} · ${n.title.substring(0,28)}…</span>
+        <div class="ap-card-actions">
+          <button class="icon-btn del" onclick="delNews(${n.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="ap-photo">
+        <div class="ap-photo-preview" style="background-image:${n.img ? `url('${n.img}')` : 'none'}">${n.img ? '' : '<i class="fas fa-image"></i>'}</div>
+        <div class="ap-photo-actions">
+          <label class="ap-btn ap-upload-btn">
+            <i class="fas fa-camera"></i> ${n.img ? 'Changer la photo' : 'Ajouter une photo'}
+            <input type="file" accept="image/*" style="display:none" onchange="updateNewsImg(${n.id},this)">
+          </label>
+          ${n.img ? `<button class="icon-btn del" onclick="removeNewsImg(${n.id})" title="Supprimer"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+      </div>
+      <div class="field"><label>Lien Spotify (lecteur intégré, optionnel)</label>
+        <input type="text" value="${n.spotify||''}" placeholder="Colle un lien Spotify (album, EP, morceau...)" oninput="updateNews(${n.id},'spotify',this.value)">
+        ${parseSpotifyEmbed(n.spotify) ? '<div class="ap-hint" style="margin-top:.5rem;margin-bottom:0;">✓ Lecteur actif — il remplace la photo sur cette actu</div>' : ''}
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Date / Année</label>
+          <input type="text" value="${n.date}" oninput="updateNews(${n.id},'date',this.value)">
+        </div>
+        <div class="field"><label>Tag</label>
+          <input type="text" value="${n.tag}" oninput="updateNews(${n.id},'tag',this.value)">
+        </div>
+      </div>
+      <div class="field"><label>Titre</label>
+        <input type="text" value="${n.title}" oninput="updateNews(${n.id},'title',this.value)">
+      </div>
+      <div class="field"><label>Contenu</label>
+        <textarea oninput="updateNews(${n.id},'body',this.value)">${n.body}</textarea>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- DATA UPDATES ---------- */
+function updateRelease(id,key,val){ const r=DATA.releases.find(r=>r.id===id); if(r){r[key]=val; renderReleases();} }
+function updateTrack(id,idx,key,val){ const r=DATA.releases.find(r=>r.id===id); if(r&&r.tracks[idx]){r.tracks[idx][key]=val; renderReleases();} }
+function updateLink(id,cls,val){
+  const r=DATA.releases.find(r=>r.id===id); if(!r) return;
+  let l=r.links.find(l=>l.cls===cls);
+  if(l){ l.url=val; }
+  else { r.links.push({label:cls==='sp'?'Spotify':'YouTube',icon:cls==='sp'?'fab fa-spotify':'fab fa-youtube',cls,url:val}); }
+  renderReleases();
+}
+function updateVideo(id,key,val){ const v=DATA.videos.find(v=>v.id===id); if(v){v[key]=val; renderVideos();} }
+function updateNews(id,key,val){ const n=DATA.news.find(n=>n.id===id); if(n){n[key]=val; renderNews();} }
+
+/* ---------- PHOTO UPLOAD ---------- */
+function readAndResizeImage(file, maxW, maxH, cb){
+  if(!file){ return; }
+  if(!file.type || !file.type.startsWith('image/')){ showToast('Choisis un fichier image','err'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(1, maxW/img.width, maxH/img.height);
+      const w = Math.max(1, Math.round(img.width*ratio));
+      const h = Math.max(1, Math.round(img.height*ratio));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      cb(canvas.toDataURL('image/jpeg', .85));
+    };
+    img.onerror = () => showToast('Image illisible','err');
+    img.src = e.target.result;
+  };
+  reader.onerror = () => showToast('Erreur de lecture du fichier','err');
+  reader.readAsDataURL(file);
+}
+
+function updateReleaseImg(id, input){
+  readAndResizeImage(input.files[0], 1000, 1000, dataUrl => {
+    const r = DATA.releases.find(r=>r.id===id);
+    if(r){ r.img = dataUrl; renderReleases(); renderAdminReleases(); showToast('Photo ajoutée ✓'); }
+  });
+}
+function removeReleaseImg(id){
+  const r = DATA.releases.find(r=>r.id===id);
+  if(r){ r.img=''; renderReleases(); renderAdminReleases(); }
+}
+
+function updateVideoImg(id, input){
+  readAndResizeImage(input.files[0], 1280, 720, dataUrl => {
+    const v = DATA.videos.find(v=>v.id===id);
+    if(v){ v.img = dataUrl; renderVideos(); renderAdminVideos(); showToast('Photo ajoutée ✓'); }
+  });
+}
+function removeVideoImg(id){
+  const v = DATA.videos.find(v=>v.id===id);
+  if(v){ v.img=''; renderVideos(); renderAdminVideos(); }
+}
+
+function updateNewsImg(id, input){
+  readAndResizeImage(input.files[0], 900, 600, dataUrl => {
+    const n = DATA.news.find(n=>n.id===id);
+    if(n){ n.img = dataUrl; renderNews(); renderAdminNews(); showToast('Photo ajoutée ✓'); }
+  });
+}
+function removeNewsImg(id){
+  const n = DATA.news.find(n=>n.id===id);
+  if(n){ n.img=''; renderNews(); renderAdminNews(); }
+}
+
+function updateBioImg(input){
+  readAndResizeImage(input.files[0], 900, 1200, dataUrl => {
+    DATA.bioImg = dataUrl; renderBio(); renderAdminPhotos(); showToast('Photo mise à jour ✓');
+  });
+}
+function removeBioImg(){
+  DATA.bioImg=''; renderBio(); renderAdminPhotos();
+}
+
+function updateHeroImg(input){
+  readAndResizeImage(input.files[0], 1600, 1600, dataUrl => {
+    DATA.heroImg = dataUrl; renderHero(); renderAdminPhotos(); showToast('Photo mise à jour ✓');
+  });
+}
+function removeHeroImg(){
+  DATA.heroImg=''; renderHero(); renderAdminPhotos();
+}
+
+function renderBio(){
+  const frame = document.getElementById('bio-frame');
+  if(!frame) return;
+  frame.innerHTML = DATA.bioImg ? `<img src="${DATA.bioImg}" alt="Photo">` : 'KUS';
+}
+
+function renderHero(){
+  const hero = document.getElementById('accueil');
+  if(!hero) return;
+  let img = document.getElementById('hero-photo');
+  if(DATA.heroImg){
+    if(!img){
+      img = document.createElement('img');
+      img.id = 'hero-photo';
+      img.className = 'hero-photo';
+      img.alt = '';
+      hero.insertBefore(img, hero.firstChild);
+    }
+    img.src = DATA.heroImg;
+  } else if(img){
+    img.remove();
+  }
+}
+
+function renderAdminPhotos(){
+  const heroP = document.getElementById('hero-photo-preview');
+  if(heroP){
+    heroP.style.backgroundImage = DATA.heroImg ? `url('${DATA.heroImg}')` : 'none';
+    heroP.innerHTML = DATA.heroImg ? '' : '<i class="fas fa-image"></i>';
+  }
+  const bioP = document.getElementById('bio-photo-preview');
+  if(bioP){
+    bioP.style.backgroundImage = DATA.bioImg ? `url('${DATA.bioImg}')` : 'none';
+    bioP.innerHTML = DATA.bioImg ? '' : '<i class="fas fa-image"></i>';
+  }
+}
+
+function addRelease(){
+  const id=Date.now();
+  DATA.releases.unshift({id,type:'Single',name:'Nouveau titre',year:'2026',label:'APN No Limite',desc:'Description...',featured:false,tracks:[{n:'1',t:'Titre',badge:'Single',url:''}],links:[]});
+  renderReleases(); renderAdminReleases();
+}
+function delRelease(id){ DATA.releases=DATA.releases.filter(r=>r.id!==id); renderReleases(); renderAdminReleases(); }
+
+function addVideo(){
+  const id=Date.now();
+  DATA.videos.push({id,ytId:'',tag:'Single · Clip',title:'Nouveau clip',year:'2026',soon:true});
+  renderVideos(); renderAdminVideos();
+}
+function delVideo(id){ DATA.videos=DATA.videos.filter(v=>v.id!==id); renderVideos(); renderAdminVideos(); }
+
+function addNews(){
+  const id=Date.now();
+  DATA.news.unshift({id,date:'2026',tag:'News',title:'Nouvelle actualité',body:'Contenu à remplir...',pinned:false});
+  renderNews(); renderAdminNews();
+}
+function delNews(id){ DATA.news=DATA.news.filter(n=>n.id!==id); renderNews(); renderAdminNews(); }
+
+/* ---------- LIVE UPDATE ---------- */
+function liveUpdate(id, val){
+  const el=document.getElementById(id);
+  if(el) el.textContent=val;
+}
+
+/* ---------- SOCIALS ---------- */
+function applySocials(){
+  const links={
+    spotify: document.getElementById('f-spotify').value,
+    youtube: document.getElementById('f-youtube').value,
+    instagram: document.getElementById('f-instagram').value,
+    tiktok: document.getElementById('f-tiktok').value,
+    facebook: document.getElementById('f-facebook').value,
+    snapchat: document.getElementById('f-snapchat').value
+  };
+  for(const [k,v] of Object.entries(links)){
+    if(!v) continue;
+    const els = document.querySelectorAll(`[id*="${k}"]`);
+    els.forEach(el=>{ if(el.tagName==='A') el.href=v; });
+  }
+  if(links.spotify) document.getElementById('nav-spotify').href=links.spotify;
+  if(links.youtube) document.getElementById('nav-youtube').href=links.youtube;
+  if(links.instagram) document.getElementById('nav-instagram').href=links.instagram;
+  showToast('Réseaux mis à jour ✓');
+}
+
+/* ---------- STYLE ---------- */
+function pickColor(el){
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  applyColor(el.dataset.color);
+}
+function applyColor(hex){
+  document.documentElement.style.setProperty('--gold', hex);
+  document.documentElement.style.setProperty('--grad', `linear-gradient(135deg,${hex},${darken(hex)})`);
+  document.getElementById('custom-color').value=hex;
+}
+function darken(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r*.7)},${Math.round(g*.7)},${Math.round(b*.7)})`;
+}
+function toggleBanner(on){ document.getElementById('cs-banner').style.display=on?'':'none'; }
+
+/* ---------- PASSWORD ---------- */
+function changePassword(){
+  const pw=document.getElementById('f-newpw').value.trim();
+  if(pw.length<4){ showToast('Mot de passe trop court','err'); return; }
+  DATA.adminPw=pw;
+  document.getElementById('f-newpw').value='';
+  showToast('Mot de passe changé ✓');
+}
+
+/* ---------- SAVE ---------- */
+function saveAll(){
+  try {
+    localStorage.setItem('kus_data', JSON.stringify(DATA));
+    showToast('Sauvegardé ✓ (stockage local)');
+  } catch(e) {
+    if(e && e.name==='QuotaExceededError'){
+      showToast('Trop de photos pour le stockage local — supprime-en quelques-unes','err');
+    } else {
+      showToast('Erreur de sauvegarde','err');
+    }
+  }
+}
+
+function loadSaved(){
+  try {
+    const saved=localStorage.getItem('kus_data');
+    if(saved){ DATA=JSON.parse(saved); }
+  } catch(e){}
+}
+
+/* ---------- EXPORT ---------- */
+function exportSite(){
+  try {
+    const dataBlockRegex = /let DATA = \{[\s\S]*?\n\};(?=\s*\/\* ---------- RENDER)/;
+    if(!dataBlockRegex.test(ORIGINAL_HTML)){
+      showToast('Erreur : structure du fichier non reconnue','err');
+      return;
+    }
+    const newDataBlock = 'let DATA = ' + JSON.stringify(DATA, null, 2) + ';';
+    const finalHtml = '<!DOCTYPE html>\n' + ORIGINAL_HTML.replace(dataBlockRegex, newDataBlock);
+
+    const blob = new Blob([finalHtml], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'kus-site-admin.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    showToast('Site exporté ✓ — dépose ce fichier sur ton hébergeur');
+  } catch(e) {
+    console.error(e);
+    showToast("Erreur lors de l'export",'err');
+  }
+}
+
+/* ---------- TOAST ---------- */
+function showToast(msg, type='ok'){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  Object.assign(t.style,{
+    position:'fixed', bottom:'2rem', left:'50%', transform:'translateX(-50%)',
+    background:type==='ok'?'#1e3a2a':'#3a1e1e',
+    border:`1px solid ${type==='ok'?'var(--success)':'var(--danger)'}`,
+    color:type==='ok'?'var(--success)':'var(--danger)',
+    padding:'.7rem 1.5rem', borderRadius:'4px', fontSize:'.82rem',
+    fontWeight:'600', letterSpacing:'1px', zIndex:'99999',
+    transition:'opacity .3s'
+  });
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 2200);
+}
+
+/* ---------- ADMIN AUTH ---------- */
+function tryLogin(){
+  const pw=document.getElementById('login-pw').value;
+  if(pw===DATA.adminPw){
+    document.getElementById('login-overlay').classList.remove('show');
+    document.body.classList.add('admin-mode');
+    document.getElementById('admin-panel').classList.add('open');
+    renderAdminReleases(); renderAdminVideos(); renderAdminNews(); renderAdminPhotos();
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-pw').value='';
+  }
+}
+document.getElementById('login-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
+
+function exitAdmin(){
+  document.body.classList.remove('admin-mode');
+  document.getElementById('admin-panel').classList.remove('open');
+}
+
+function togglePanel(){
+  document.getElementById('admin-panel').classList.toggle('open');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.ap-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ap-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if(name==='releases') renderAdminReleases();
+  if(name==='videos') renderAdminVideos();
+  if(name==='news') renderAdminNews();
+  if(name==='photos') renderAdminPhotos();
+}
+
+/* ---------- VIDEO ---------- */
+function openVid(id){
+  document.getElementById('vframe').src=`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+  document.getElementById('vmodal').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeVid(){
+  document.getElementById('vframe').src='';
+  document.getElementById('vmodal').classList.remove('on');
+  document.body.style.overflow='';
+}
+document.getElementById('vmodal').addEventListener('click',e=>{ if(e.target.id==='vmodal') closeVid(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeVid(); });
+
+/* ---------- NAV ---------- */
+window.addEventListener('scroll',()=>{ document.getElementById('navbar').classList.toggle('scrolled',scrollY>60); });
+document.getElementById('menuToggle').addEventListener('click',()=>{ document.getElementById('navLinks').classList.toggle('open'); });
+document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>document.getElementById('navLinks').classList.remove('open')));
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',function(e){
+  const t=document.querySelector(this.getAttribute('href'));
+  if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'});}
+}));
+
+/* ---------- FADE IN OBSERVER ---------- */
+const io = new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('on'), i*60); } });
+},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+
+function observeFi(){ document.querySelectorAll('.fi:not(.on)').forEach(el=>io.observe(el)); }
+
+/* ---------- NEWSLETTER ---------- */
+function nlSubmit(e){
+  e.preventDefault();
+  const btn=e.target.querySelector('button');
+  btn.textContent='✓ Inscrit !';
+  btn.style.background='#1e4d2e';
+  setTimeout(()=>{ btn.textContent="S'inscrire"; btn.style.background=''; e.target.reset(); },3000);
+}
+
+/* ---------- INIT ---------- */
+loadSaved();
+renderReleases();
+renderVideos();
+renderNews();
+renderBio();
+renderHero();
+observeFi();
+</script>
+</body>
+</html>
